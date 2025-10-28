@@ -1,6 +1,6 @@
 import pandas as pd
 import yfinance as yf
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 
 def get_ticker_types(
     n: int = 20,
@@ -110,3 +110,75 @@ def build_g_matrix(tickers_classes: Dict[str, str]) -> pd.DataFrame:
             g.loc[ticker, cls] = 1
 
     return g
+
+def class_limits(
+    classes: List[str],
+    limits: Optional[List[Tuple[float, float]]] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Genera dos DataFrames con los límites mínimos y máximos de inversión por clase.
+
+    Parámetros:
+    ----
+    - classes: lista de nombres o identificadores de clases de activos.
+    - limits: lista opcional de tuplas (L_c, U_c) para cada clase.
+              Si no se especifica, se usa el valor por defecto (0.05, 0.90) para todas.
+
+    Retorna:
+    ----
+    - DataFrames con índice = nombre de la clase y columna ['L_c'] y ['U_c'].
+    """
+    if limits is None:
+        limits = [(0.05, 0.75)] * len(classes)
+
+    if len(limits) != len(classes):
+        raise ValueError("La longitud de 'limits' debe coincidir con la longitud de 'classes'.")
+
+    df_L = pd.DataFrame({
+        'L_c': [L for L, _ in limits]
+    }, index=classes)
+
+    df_U = pd.DataFrame({
+        'U_c': [U for _, U in limits]
+    }, index=classes)
+
+    df_L.index.name = 'Clase'
+    df_U.index.name = 'Clase'
+    return df_L, df_U
+
+
+def asset_limits(
+    assets: List[str],
+    limits: Optional[List[Tuple[float, float]]] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Genera dos DataFrames con los límites mínimos y máximos de inversión por activo.
+
+    Parámetros:
+    ----
+    - assets: lista de tickers o identificadores de activos.
+    - limits: lista opcional de tuplas (x_i^{min}, x_i^{max}) para cada activo.
+              Si no se especifica, se usa el valor por defecto (0.00, 1.00) para todas.
+
+    Retorna:
+    ----
+    - DataFrames con índice = ticker y columna ['x_i_min'] y ['x_i_max'].
+    """
+    if limits is None:
+        limits = [(0.01, 0.75)] * len(assets)
+
+    if len(limits) != len(assets):
+        raise ValueError("La longitud de 'limits' debe coincidir con la longitud de 'assets'.")
+
+    df_xmin = pd.DataFrame({
+        'x_i_min': [xmin for xmin, _ in limits]
+    }, index=assets)
+
+    df_xmax = pd.DataFrame({
+        'x_i_max': [xmax for _, xmax in limits]
+    }, index=assets)
+
+    df_xmin.index.name = 'Activo'
+    df_xmax.index.name = 'Activo'
+
+    return df_xmin, df_xmax
