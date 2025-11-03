@@ -1,3 +1,9 @@
+/*********************************************
+ * OPL 22.1.1.0 Data
+ * Author: Santiago
+ * Creation Date: Oct 27, 2025 at 2:26:29 PM
+ *********************************************/
+
 // --- Conjuntos ---
 I = { "AAPL", "AMZN", "BTC-USD", "ES=F", "EURUSD=X", "GOOGL", "MSFT", "NVDA", "SPY", "TSLA" };
 

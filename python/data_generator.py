@@ -6,11 +6,11 @@ from utils.cplex_dat import export_to_cplex_dat
 
 # Fechas para rangos en predicción de precios (opcional)
 today = pd.Timestamp.today().normalize()
-start_date = today - pd.DateOffset(months=13)
-end_date = today - pd.DateOffset(months=7)
+start_date = today - pd.DateOffset(months=25)
+end_date = today - pd.DateOffset(months=13)
 
 # Obtener un conjunto de datos inicial (Periodo de dos meses con periodos de decisión semanales)
-tickers = get_ticker_types(n = 10, initial_tickers=["AAPL", "SPY", "VTSAX", "EURUSD=X", "BTC-USD", "ES=F", "NVDA", "MSFT"])
+tickers = get_ticker_types(n = 10, initial_tickers=["AAPL", "SPY", "EURUSD=X", "BTC-USD", "ES=F", "NVDA", "MSFT"])
 exp_returns = expected_returns(list(tickers.keys()), period="1mo", price_interval="1d", freq="W", date_range=(start_date, end_date))
 g_matrix = build_g_matrix(tickers)
 
