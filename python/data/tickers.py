@@ -2,80 +2,99 @@ import pandas as pd
 import yfinance as yf
 from typing import List, Dict, Optional, Tuple
 
+from pprint import pprint
+
+import yfinance as yf
+from typing import Dict, List, Optional
+
 def get_ticker_types(
     n: int = 20,
     initial_tickers: Optional[List[str]] = None
 ) -> Dict[str, str]:
     """
-    Obtiene un diccionario de tamaño n con tickers y su tipo (“Acciones”, “Bonos”, “ETF”, “Otros”),
-    usando datos de yfinance. Si se proporciona initial_tickers, los incluye primero, luego completa
-    hasta n con otros tickers aleatorios o seleccionados.
+    Obtiene un diccionario de tamaño n con tickers y su tipo (“Acciones”, “Bonos”, “ETF”, “Índice”, “Cripto”, “Otros”),
+    usando datos de yfinance y un fallback preclasificado.
     
-    Parámetros:
-    ----------
-    n : int
-        Número total de entradas que debe devolver el diccionario.
-    initial_tickers : Optional[List[str]]
-        Lista de tickers pre-seleccionados por el usuario (opcional).
-    
-    Retorna:
-    -------
-    Dict[str, str]
-        Diccionario donde cada clave es un ticker (str) y el valor es su tipo (str).
+    Si se proporciona initial_tickers, se incluyen primero; el resto se completa con el fallback.
     """
+
     result: Dict[str, str] = {}
-    
-    # 1. Si hay tickers iniciales, los procesamos primero
+
+    # --- Fallback preclasificado (más robusto y diverso) ---
+    fallback = {
+        # Acciones
+        "AAPL": "Acciones", "MSFT": "Acciones", "GOOGL": "Acciones", "AMZN": "Acciones",
+        "TSLA": "Acciones", "JPM": "Acciones", "JNJ": "Acciones", "XOM": "Acciones",
+        "PG": "Acciones", "WMT": "Acciones",
+
+        # ETFs
+        "SPY": "ETF", "VOO": "ETF", "VTI": "ETF", "QQQ": "ETF", "GLD": "ETF",
+        "SLV": "ETF", "VNQ": "ETF", "XLK": "ETF", "XLF": "ETF", "XLE": "ETF",
+
+        # Bonos / renta fija
+        "BND": "Bonos", "TLT": "Bonos", "IEF": "Bonos", "SHY": "Bonos", "LQD": "Bonos",
+
+        # Criptomonedas
+        "BTC-USD": "Cripto", "ETH-USD": "Cripto",
+
+        # Commodities
+        "USO": "Commodities", "UNG": "Commodities"
+    }
+
+    # --- Función auxiliar para inferir tipo desde info de yfinance ---
+    def infer_type(info, fallback_type="Otros"):
+        qtype = (info.get("quoteType") or "").upper()
+        name = ((info.get("shortName") or info.get("longName") or "")).upper()
+
+        if "ETF" in name or qtype == "ETF":
+            return "ETF"
+        elif qtype == "MUTUALFUND":
+            return "Fondo"
+        elif qtype == "INDEX":
+            return "Índice"
+        elif qtype == "BOND":
+            return "Bonos"
+        elif qtype == "CURRENCY":
+            return "Divisa"
+        elif qtype == "CRYPTOCURRENCY":
+            return "Cripto"
+        elif "BOND" in name or "TREASURY" in name:
+            return "Bonos"
+        elif "FUND" in name:
+            return "ETF"
+        elif qtype == "EQUITY":
+            return "Acciones"
+        else:
+            return fallback_type
+
+    # --- Procesar tickers iniciales (si existen) ---
     if initial_tickers:
         for ticker in initial_tickers:
             if len(result) >= n:
                 break
             try:
                 info = yf.Ticker(ticker).info
-                # Identificar tipo
-                sec = info.get("sector", None)
-                asset_type = "Otros"
-                # Simple heurística para clasificar
-                if info.get("quoteType") == "ETF":
-                    asset_type = "ETF"
-                elif sec is not None:
-                    asset_type = "Acciones"
-                # Podemos añadir heurísticas para “Bonos” si info lo permite
+                fallback_type = fallback.get(ticker, "Otros")
+                asset_type = infer_type(info, fallback_type)
                 result[ticker] = asset_type
             except Exception:
-                result[ticker] = "Desconocido"
-    
-    # 2. Si no alcanzamos n, añadimos tickers predeterminados o seleccionados aleatoriamente
-    #    Aquí definimos una lista de tickers de ejemplo para completar (puedes ampliarla).
-    fallback = [
-        "SPY", "VOO", "VTI",   # ETFs
-        "BND", "TLT", "IEF",   # Bonos / renta fija
-        "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA",  # Acciones
-        "JNJ", "WMT", "JPM", "PG", "XOM",         # Acciones
-        "GLD", "SLV", "USO",                      # Commodities / Otros
-        "VNQ"                                      # REIT / Otros
-    ]
+                result[ticker] = fallback.get(ticker, "Desconocido")
 
-    for ticker in fallback:
+    # --- Completar con fallback preclasificado ---
+    for ticker, pre_type in fallback.items():
         if len(result) >= n:
             break
         if ticker in result:
             continue
         try:
             info = yf.Ticker(ticker).info
-            sec = info.get("sector", None)
-            asset_type = "Otros"
-            if info.get("quoteType") == "ETF":
-                asset_type = "ETF"
-            elif sec is not None:
-                asset_type = "Acciones"
-            elif ticker in ["BND", "TLT", "IEF"]:
-                asset_type = "Bonos"
+            asset_type = infer_type(info, pre_type)
             result[ticker] = asset_type
         except Exception:
-            result[ticker] = "Desconocido"
-        
+            result[ticker] = pre_type  # Usa el tipo del fallback como respaldo
+
     return result
+
 
 def build_g_matrix(tickers_classes: Dict[str, str]) -> pd.DataFrame:
     """
@@ -111,6 +130,7 @@ def build_g_matrix(tickers_classes: Dict[str, str]) -> pd.DataFrame:
 
     return g
 
+
 def class_limits(
     classes: List[str],
     limits: Optional[List[Tuple[float, float]]] = None
@@ -129,7 +149,7 @@ def class_limits(
     - DataFrames con índice = nombre de la clase y columna ['L_c'] y ['U_c'].
     """
     if limits is None:
-        limits = [(0.05, 0.75)] * len(classes)
+        limits = [(0.1, 0.75)] * len(classes)
 
     if len(limits) != len(classes):
         raise ValueError("La longitud de 'limits' debe coincidir con la longitud de 'classes'.")
@@ -165,7 +185,7 @@ def asset_limits(
     - DataFrames con índice = ticker y columna ['x_i_min'] y ['x_i_max'].
     """
     if limits is None:
-        limits = [(0.01, 0.75)] * len(assets)
+        limits = [(0, 0.75)] * len(assets)
 
     if len(limits) != len(assets):
         raise ValueError("La longitud de 'limits' debe coincidir con la longitud de 'assets'.")
@@ -182,3 +202,42 @@ def asset_limits(
     df_xmax.index.name = 'Activo'
 
     return df_xmin, df_xmax
+
+
+def generate_transaction_costs(tickers_dict):
+    """
+    Genera costos proporcionales de compra y venta para cada activo.
+    
+    Parámetros:
+    ----
+    - tickers_dict: dict {ticker: tipo} donde tipo ∈ {"Acciones", "Bonos", "ETF"}.
+    
+    Retorna:
+    ----
+    - (c_buy_df, c_sell_df): dos DataFrames con los costos proporcionales por activo.
+    """
+    # Definir valores base por clase de activo (en proporciones)
+    base_costs = {
+        "Acciones": {"buy": 0.0010, "sell": 0.0015},   # 0.10% compra / 0.15% venta
+        "ETF": {"buy": 0.0005, "sell": 0.0010},        # 0.05% / 0.10% (alta liquidez)
+        "Fondo": {"buy": 0.0015, "sell": 0.0020},      # 0.15% / 0.20% (menor liquidez intradía)
+        "Bonos": {"buy": 0.0020, "sell": 0.0025},      # 0.20% / 0.25% (spreads mayores)
+        "Cripto": {"buy": 0.0025, "sell": 0.0030},     # 0.25% / 0.30% (costos de exchange)
+        "Divisa": {"buy": 0.0002, "sell": 0.0003},     # 0.02% / 0.03% (spreads mínimos)
+        "Otros": {"buy": 0.0015, "sell": 0.0020}       # genérico (commodities, REITs, etc.)
+    }
+
+
+    # Construir listas de resultados
+    data_buy, data_sell = {}, {}
+
+    for ticker, tipo in tickers_dict.items():
+        tipo = tipo if tipo in base_costs else "Otros"
+        data_buy[ticker] = base_costs[tipo]["buy"]
+        data_sell[ticker] = base_costs[tipo]["sell"]
+
+    # Convertir a DataFrame (una sola columna)
+    c_buy_df = pd.DataFrame.from_dict(data_buy, orient="index", columns=["c_buy"])
+    c_sell_df = pd.DataFrame.from_dict(data_sell, orient="index", columns=["c_sell"])
+
+    return c_buy_df, c_sell_df

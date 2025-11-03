@@ -1,0 +1,90 @@
+=== RESUMEN DE PARÁMETROS UTILIZADOS ===
+
+Conjunto de activos (I):
+ {"AAPL" "AMZN" "BTC-USD" "ES=F" "EURUSD=X" "GOOGL" "MSFT" "NVDA" "SPY" "VTSAX"}
+
+Conjunto de clases de activos (C):
+ {"Acciones" "Cripto" "Divisa" "ETF" "Fondo" "Otros"}
+
+Conjunto de períodos (T):
+1..7
+
+Capital inicial (W0): 100
+
+Costos de compra (c_buy[i]):
+  AAPL: 0.001
+  AMZN: 0.0005
+  BTC-USD: 0.0015
+  ES=F: 0.0002
+  EURUSD=X: 0.0025
+  GOOGL: 0.0015
+  MSFT: 0.001
+  NVDA: 0.001
+  SPY: 0.001
+  VTSAX: 0.001
+
+Costos de venta (c_sell[i]):
+  AAPL: 0.0015
+  AMZN: 0.001
+  BTC-USD: 0.002
+  ES=F: 0.0003
+  EURUSD=X: 0.003
+  GOOGL: 0.002
+  MSFT: 0.0015
+  NVDA: 0.0015
+  SPY: 0.0015
+  VTSAX: 0.0015
+
+Límites mínimos por clase (L[c]):
+  Acciones: 0.1
+  Cripto: 0.1
+  Divisa: 0.1
+  ETF: 0.1
+  Fondo: 0.1
+  Otros: 0.1
+
+Límites máximos por clase (U[c]):
+  Acciones: 0.75
+  Cripto: 0.75
+  Divisa: 0.75
+  ETF: 0.75
+  Fondo: 0.75
+  Otros: 0.75
+
+Límites mínimos por activo (X_min[i]):
+  AAPL: 0
+  AMZN: 0
+  BTC-USD: 0
+  ES=F: 0
+  EURUSD=X: 0
+  GOOGL: 0
+  MSFT: 0
+  NVDA: 0
+  SPY: 0
+  VTSAX: 0
+
+Límites máximos por activo (X_max[i]):
+  AAPL: 0.75
+  AMZN: 0.75
+  BTC-USD: 0.75
+  ES=F: 0.75
+  EURUSD=X: 0.75
+  GOOGL: 0.75
+  MSFT: 0.75
+  NVDA: 0.75
+  SPY: 0.75
+  VTSAX: 0.75
+
+Matriz de pertenencia g[i][c] (1 si el activo pertenece a la clase):
+  AAPL: 1 0 0 0 0 0 
+  AMZN: 1 0 0 0 0 0 
+  BTC-USD: 0 1 0 0 0 0 
+  ES=F: 0 0 0 0 0 1 
+  EURUSD=X: 0 0 1 0 0 0 
+  GOOGL: 1 0 0 0 0 0 
+  MSFT: 1 0 0 0 0 0 
+  NVDA: 1 0 0 0 0 0 
+  SPY: 0 0 0 1 0 0 
+  VTSAX: 0 0 0 0 1 0 
+
+=== FIN DEL RESUMEN ===

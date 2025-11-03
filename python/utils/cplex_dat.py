@@ -9,6 +9,8 @@ def export_to_cplex_dat(
     C: List[str],
     W0: int,
     exp_returns: pd.DataFrame,
+    c_buy: pd.DataFrame,
+    c_sell: pd.DataFrame,
     g_matrix: pd.DataFrame,
     L_c: pd.DataFrame,
     U_c: pd.DataFrame,
@@ -64,6 +66,8 @@ def export_to_cplex_dat(
         # --- Parámetros ---
         f.write("// --- Parámetros ---\n")
         f.write(opl_matrix("r", exp_returns))
+        f.write(opl_list("c_buy", c_buy))
+        f.write(opl_list("c_sell", c_sell))
         f.write(opl_binary_matrix("g", g_matrix))
         f.write(opl_value("W0", W0))
         f.write(opl_list("L", L_c))
